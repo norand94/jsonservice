@@ -3,19 +3,22 @@ package core
 import (
 	"time"
 	"sync"
+	"github.com/go-redis/redis"
 )
 
 type App struct {
 	currPos int
+	RClient *redis.Client
 	cpMux   sync.RWMutex
 	lastReq time.Time
 	lrMux   sync.RWMutex
 }
 
-func NewApp() *App  {
+func NewApp(client *redis.Client) *App  {
 	return &App{
 		currPos: 0,
 		lastReq: time.Now(),
+		RClient: client,
 	}
 }
 

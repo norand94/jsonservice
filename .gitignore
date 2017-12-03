@@ -1,2 +1,3 @@
 /.idea
 /jsonservice
+/redis_data/*

@@ -4,26 +4,24 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/norand94/jsonservice/core"
-	"time"
+	"github.com/go-redis/redis"
 )
 
 var app *core.App
+var rcli *redis.Client
 
 func main(){
 	fmt.Println("Started")
-	app = core.NewApp()
+	rcli := redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+		Password: "",
+		DB: 0,
+	})
+
+	app = core.NewApp(rcli)
+
 	r := gin.Default()
-	r.POST("/", saveRequest)
+	r.POST("/", app.SaveRequest)
 	r.Run(":8080")
 }
 
-func saveRequest(c *gin.Context) {
-	fmt.Println(c.Request.Header.Get("Content-Type"))
-	if time.Now().Sub(app.LastReq()) > 5 * time.Second {
-		app.IncrCurrPos()
-	}
-	app.SetLastReq(time.Now())
-	c.JSON(200, gin.H{
-		"pos" : app.CurrPos(),
-	})
-}
