@@ -8,7 +8,6 @@ import (
 )
 
 var app *core.App
-var rcli *redis.Client
 
 func main(){
 	fmt.Println("Started")
@@ -22,6 +21,9 @@ func main(){
 
 	r := gin.Default()
 	r.POST("/", app.SaveRequest)
+	r.GET("/stats", app.Stats)
 	r.Run(":8080")
 }
+
+
 
