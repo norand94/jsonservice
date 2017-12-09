@@ -71,6 +71,7 @@ func(app *App) UnmarhalProcess(){
 				err := json.Unmarshal(bytes, &data)
 				if err != nil {
 					fmt.Println("Decode:", err.Error())
+					//fmt.Println(string(bytes))
 					continue
 				}
 				app.chanKeys<-data.Key()
