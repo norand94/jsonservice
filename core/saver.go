@@ -1,11 +1,12 @@
 package core
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"time"
 	"strings"
+	"github.com/valyala/fasthttp"
+	"time"
+	"encoding/json"
 )
 
 type JData struct {
@@ -49,24 +50,34 @@ func createReport(key string) StatsReport {
 	}
 }
 
-func (app *App) SaveRequest(c *gin.Context) {
-	fmt.Println(c.Request.Header.Get("Content-Type"))
+func (app *App) SaveRequest(ctx *fasthttp.RequestCtx) {
+	defer ctx.SetConnectionClose()
 	if time.Now().Sub(app.LastReq()) > 5*time.Second {
 		app.IncrCurrPos()
 	}
 	app.SetLastReq(time.Now())
 
-	dec := json.NewDecoder(c.Request.Body)
 	var data JData
-	err := dec.Decode(&data)
+	err := json.Unmarshal(ctx.PostBody(), &data)
 	if err != nil {
-		fmt.Println(err)
-		c.JSON(400, gin.H{
-			"err": err.Error(),
-		})
+		fmt.Println("Decode:",err.Error())
+		ctx.Response.SetStatusCode(400)
+		fmt.Fprint(ctx,err)
 		return
 	}
-	fmt.Printf("%+v \n", data)
+
+	_, err = app.RClient.Incr(data.Key()).Result()
+	if err != nil {
+		fmt.Println(err)
+		ctx.Response.SetStatusCode(500)
+		fmt.Fprint(ctx,err)
+		return
+	}
+
+	ctx.SetStatusCode(200)
+	fmt.Fprint(ctx, "{pos:", app.currPos, "}")
+	/*
+
 	_, err = app.RClient.Incr(data.Key()).Result()
 	if err != nil {
 		fmt.Println(err)
@@ -79,6 +90,7 @@ func (app *App) SaveRequest(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"pos": app.CurrPos(),
 	})
+	*/
 }
 
 func (a *App)Stats(c *gin.Context) {

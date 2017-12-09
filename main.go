@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"github.com/norand94/jsonservice/core"
 	"github.com/go-redis/redis"
+	"github.com/valyala/fasthttp"
 )
 
 var app *core.App
@@ -19,10 +19,12 @@ func main(){
 
 	app = core.NewApp(rcli)
 
-	r := gin.Default()
-	r.POST("/", app.SaveRequest)
-	r.GET("/stats", app.Stats)
-	r.Run(":8080")
+	fasthttp.ListenAndServe(":8080", app.SaveRequest)
+	//fasthttp.
+	//r := gin.Default()
+	//r.POST("/", app.SaveRequest)
+	//r.GET("/stats", app.Stats)
+	//r.Run(":8080")
 }
 
 
