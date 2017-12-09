@@ -10,7 +10,7 @@ import (
 var app *core.App
 
 func main(){
-	fmt.Println("Started")
+	fmt.Println("v1.2")
 	rcli := redis.NewClient(&redis.Options{
 		Addr: "localhost:6379",
 		Password: "",
@@ -20,6 +20,7 @@ func main(){
 	app = core.NewApp(rcli)
 
 	fasthttp.ListenAndServe(":8080", app.SaveRequest)
+
 	//fasthttp.
 	//r := gin.Default()
 	//r.POST("/", app.SaveRequest)

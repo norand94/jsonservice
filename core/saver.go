@@ -52,45 +52,42 @@ func createReport(key string) StatsReport {
 
 func (app *App) SaveRequest(ctx *fasthttp.RequestCtx) {
 	defer ctx.SetConnectionClose()
+
 	if time.Now().Sub(app.LastReq()) > 5*time.Second {
 		app.IncrCurrPos()
 	}
 	app.SetLastReq(time.Now())
-
-	var data JData
-	err := json.Unmarshal(ctx.PostBody(), &data)
-	if err != nil {
-		fmt.Println("Decode:",err.Error())
-		ctx.Response.SetStatusCode(400)
-		fmt.Fprint(ctx,err)
-		return
-	}
-
-	_, err = app.RClient.Incr(data.Key()).Result()
-	if err != nil {
-		fmt.Println(err)
-		ctx.Response.SetStatusCode(500)
-		fmt.Fprint(ctx,err)
-		return
-	}
-
+	app.chanBytes<-ctx.PostBody()
 	ctx.SetStatusCode(200)
 	fmt.Fprint(ctx, "{pos:", app.currPos, "}")
-	/*
+}
 
-	_, err = app.RClient.Incr(data.Key()).Result()
-	if err != nil {
-		fmt.Println(err)
-		c.JSON(500, gin.H{
-			"err": err,
-		})
-		return
+func(app *App) UnmarhalProcess(){
+	for i:=0; i< 1000; i++ {
+		go func() {
+			for {
+				bytes, _ := <-app.chanBytes
+				var data JData
+				err := json.Unmarshal(bytes, &data)
+				if err != nil {
+					fmt.Println("Decode:", err.Error())
+					continue
+				}
+				app.chanKeys<-data.Key()
+			}
+		}()
 	}
+}
 
-	c.JSON(200, gin.H{
-		"pos": app.CurrPos(),
-	})
-	*/
+func(app *App) SaveProcess(){
+	for {
+		key, _ := <-app.chanKeys
+		_, err := app.RClient.Incr(key).Result()
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+	}
 }
 
 func (a *App)Stats(c *gin.Context) {
